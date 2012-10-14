@@ -30,7 +30,6 @@
 #include <gui/ISurfaceComposer.h>
 #include <gui/ISurfaceTexture.h>
 
-#include <gui/ISurfaceClient.h>
 #include <private/gui/LayerState.h>
 
 #include <ui/DisplayInfo.h>

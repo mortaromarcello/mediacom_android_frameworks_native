@@ -29,7 +29,6 @@
 
 #include <gui/IGraphicBufferAlloc.h>
 #include <gui/ISurfaceComposerClient.h>
-#include <gui/ISurfaceClient.h>
 
 namespace android {
 // ----------------------------------------------------------------------------
