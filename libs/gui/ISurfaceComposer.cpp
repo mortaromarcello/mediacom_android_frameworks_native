@@ -279,46 +279,6 @@ status_t BnSurfaceComposer::onTransact(
             reply->writeStrongBinder(connection->asBinder());
             return NO_ERROR;
         } break;
-         case SET_DISPLAYPROP:
-        {
-            CHECK_INTERFACE(ISurfaceComposer, data, reply);
-            int     cmd     = data.readInt32();
-            int     param0  = data.readInt32();
-            int     param1  = data.readInt32();
-            int     param2  = data.readInt32();
-            int res = setDisplayProp(cmd,param0,param1,param2);
-            reply->writeInt32(res);
-        }
-            break;
-            
-        case GET_DISPLAYPROP:
-        {
-            CHECK_INTERFACE(ISurfaceComposer, data, reply);
-            int     cmd     = data.readInt32();
-            int     param0  = data.readInt32();
-            int     param1  = data.readInt32();
-            int res = getDisplayProp(cmd,param0,param1);
-            reply->writeInt32(res);
-        }
-            break;
-
-        case REGISTER_CLIENT:
-        {
-            CHECK_INTERFACE(ISurfaceComposer, data, reply);
-            sp<ISurfaceClient> client = interface_cast<ISurfaceClient>(data.readStrongBinder());
-            registerClient(client);
-            return NO_ERROR;
-        }
-            break;
-
-		case UNREGISTER_CLIENT:
-        {
-            CHECK_INTERFACE(ISurfaceComposer, data, reply);
-            unregisterClient();
-            return NO_ERROR;
-        }
-            break;
-            
         default:
             return BBinder::onTransact(code, data, reply, flags);
     }
