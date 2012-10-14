@@ -160,10 +160,6 @@ public:
         TURN_ELECTRON_BEAM_ON,
         AUTHENTICATE_SURFACE,
         CREATE_DISPLAY_EVENT_CONNECTION,
-        SET_DISPLAYPROP,
-        GET_DISPLAYPROP,
-        REGISTER_CLIENT,
-        UNREGISTER_CLIENT,
     };
 
     virtual status_t    onTransact( uint32_t code,
