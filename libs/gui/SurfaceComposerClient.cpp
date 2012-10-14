@@ -39,7 +39,6 @@
 #include <private/gui/ComposerService.h>
 #include <private/gui/LayerState.h>
 #include <private/gui/SharedBufferStack.h>
-#include <gui/ISurfaceClient.h>
 
 namespace android {
 // ---------------------------------------------------------------------------
@@ -553,47 +552,6 @@ status_t SurfaceComposerClient::unfreezeDisplay(DisplayID dpy, uint32_t flags)
 {
     // This has been made a no-op because it can cause Gralloc buffer deadlocks.
     return NO_ERROR;
-}
-
-int  SurfaceComposerClient::setDisplayProp(int cmd,int param0,int param1,int param2)
-{
-    sp<ISurfaceComposer> s(ComposerService::getComposerService());
-    if (s == NULL) return NO_INIT;
-    return s->setDisplayProp(cmd,param0,param1,param2);
-}
-
-int  SurfaceComposerClient::getDisplayProp(int cmd,int param0,int param1)
-{
-    sp<ISurfaceComposer> s(ComposerService::getComposerService());
-    if (s == NULL) return NO_INIT;
-
-    return s->getDisplayProp(cmd,param0,param1);
-}
-
-void  SurfaceComposerClient::registerSurfaceClient(const sp<ISurfaceClient>& client)
-{
-    sp<ISurfaceComposer> s(ComposerService::getComposerService());
-    if (s == NULL) 
-    {
-    	ALOGD("get ISurfaceComposer failed!\n");
-    	
-    	return ;
-    }
-
-    return s->registerClient(client);
-}
-
-void  SurfaceComposerClient::unregisterSurfaceClient()
-{
-    sp<ISurfaceComposer> s(ComposerService::getComposerService());
-    if (s == NULL) 
-    {
-    	ALOGD("get ISurfaceComposer failed!\n");
-    	
-    	return ;
-    }
-
-    return s->unregisterClient();
 }
 
 // ----------------------------------------------------------------------------
