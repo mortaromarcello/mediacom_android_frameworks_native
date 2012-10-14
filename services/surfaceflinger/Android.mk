@@ -9,8 +9,6 @@ LOCAL_SRC_FILES:= \
     LayerScreenshot.cpp                     \
     DisplayHardware/DisplayHardware.cpp     \
     DisplayHardware/DisplayHardwareBase.cpp \
-    DisplayHardware/DisplayDispatcher.cpp 	\
-    DisplayHardware/DisplaySemaphore.cpp 	\
     DisplayHardware/HWComposer.cpp          \
     DisplayHardware/PowerHAL.cpp            \
     GLExtensions.cpp                        \
@@ -18,22 +16,13 @@ LOCAL_SRC_FILES:= \
     SurfaceFlinger.cpp                      \
     SurfaceTextureLayer.cpp                 \
     Transform.cpp                           \
-    
 
 LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
 
-ifeq ($(TARGET_BOARD_PLATFORM), omap3)
-	LOCAL_CFLAGS += -DNO_RGBX_8888
-endif
 ifeq ($(TARGET_BOARD_PLATFORM), omap4)
 	LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
 endif
-
-ifneq ($(BOARD_WITHOUT_HW_COMPOSER),)
-	LOCAL_CFLAGS += -DMISSING_GRALLOC_BUFFERS
-endif
-
 ifeq ($(TARGET_BOARD_PLATFORM), s5pc110)
 	LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
 	LOCAL_CFLAGS += -DNEVER_DEFAULT_TO_ASYNC_MODE
