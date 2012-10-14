@@ -53,16 +53,14 @@ bool DisplayHardwareBase::DisplayEventThread::threadLoop() {
     if (waitForFbSleep() == NO_ERROR) {
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         ALOGD("About to give-up screen, flinger = %p", flinger.get());
-        /*
         if (flinger != 0) {
             flinger->screenReleased();
-        }*/
+        }
         if (waitForFbWake() == NO_ERROR) {
             ALOGD("Screen about to return, flinger = %p", flinger.get());
-            /*
             if (flinger != 0) {
                 flinger->screenAcquired();
-            }*/
+            }
             return true;
         }
     }
