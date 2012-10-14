@@ -139,11 +139,6 @@ public:
 
     /* return an IDisplayEventConnection */
     virtual sp<IDisplayEventConnection> createDisplayEventConnection() = 0;
-
-    virtual int      setDisplayProp(int cmd,int param0,int param1,int param2) = 0;
-    virtual int      getDisplayProp(int cmd,int param0,int param1) = 0;
-    virtual void     registerClient(const sp<ISurfaceClient>& client) = 0;
-	virtual void     unregisterClient() = 0;
 };
 
 // ----------------------------------------------------------------------------

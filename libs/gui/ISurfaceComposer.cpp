@@ -193,45 +193,6 @@ public:
         result = interface_cast<IDisplayEventConnection>(reply.readStrongBinder());
         return result;
     }
-
-     virtual int  setDisplayProp(int cmd,int param0,int param1,int param2)
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
-        data.writeInt32(cmd);
-        data.writeInt32(param0);
-        data.writeInt32(param1);
-        data.writeInt32(param2);
-        remote()->transact(BnSurfaceComposer::SET_DISPLAYPROP, data, &reply);
-        return reply.readInt32();
-    }
-    
-    virtual int  getDisplayProp(int cmd,int param0,int param1)
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
-        data.writeInt32(cmd);
-        data.writeInt32(param0);
-        data.writeInt32(param1);
-        remote()->transact(BnSurfaceComposer::GET_DISPLAYPROP, data, &reply);
-        return reply.readInt32();
-    }
-
-    virtual void  registerClient(const sp<ISurfaceClient>& client)
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
-        data.writeStrongBinder(client->asBinder());
-        remote()->transact(BnSurfaceComposer::REGISTER_CLIENT, data, &reply);
-    }
-
-	virtual void  unregisterClient()
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
-        remote()->transact(BnSurfaceComposer::UNREGISTER_CLIENT, data, &reply);
-    }
-
 };
 
 IMPLEMENT_META_INTERFACE(SurfaceComposer, "android.ui.ISurfaceComposer");
