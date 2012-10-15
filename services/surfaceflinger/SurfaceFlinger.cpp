@@ -997,15 +997,15 @@ void SurfaceFlinger::composeSurfaces(const Region& dirty)
             // remove where there are opaque FB layers. however, on some
             // GPUs doing a "clean slate" glClear might be more efficient.
             // We'll revisit later if needed.
-             const Region region(hw.bounds());
 #ifdef QCOM_HARDWARE
-             if (0 != qdutils::CBUtils::qcomuiClearRegion(region,
-                                              hw.getEGLDisplay()))
+			const Region region(hw.bounds());
+			if (0 != qdutils::CBUtils::qcomuiClearRegion(region,
+											hw.getEGLDisplay()))
 #endif
-             {
-                 glClearColor(0, 0, 0, 0);
-                 glClear(GL_COLOR_BUFFER_BIT);
-             }
+			{
+				glClearColor(0, 0, 0, 0);
+				glClear(GL_COLOR_BUFFER_BIT);
+        	}
         } else {
             // screen is already cleared here
             if (!mWormholeRegion.isEmpty()) {
