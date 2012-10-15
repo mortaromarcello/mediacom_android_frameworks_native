@@ -205,8 +205,8 @@ public:
         result = reply.readInt32();
         return result;
     }
-
-virtual int setParameter(uint32_t cmd,uint32_t value) 
+    
+    virtual int setParameter(uint32_t cmd,uint32_t value) 
     {
         Parcel data, reply;
         data.writeInterfaceToken(ISurfaceTexture::getInterfaceDescriptor());
