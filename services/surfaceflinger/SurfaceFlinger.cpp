@@ -56,9 +56,6 @@
 #include "LayerDim.h"
 #include "LayerScreenshot.h"
 #include "SurfaceFlinger.h"
-#ifdef QCOM_HARDWARE
-#include "qcom_ui.h"
-#endif
 
 #include "DisplayHardware/DisplayHardware.h"
 #include "DisplayHardware/HWComposer.h"
@@ -69,6 +66,10 @@
 
 #ifdef BOARD_USES_SAMSUNG_HDMI
 #include "SecTVOutService.h"
+#endif
+
+#ifdef QCOM_HARDWARE
+#include <clear_regions.h>
 #endif
 
 #define EGL_VERSION_HW_ANDROID  0x3143
@@ -818,6 +819,28 @@ void SurfaceFlinger::invalidateHwcGeometry()
     mHwWorkListDirty = true;
 }
 
+int SurfaceFlinger::setDisplayParameter(uint32_t cmd,uint32_t  value)
+{
+    HWComposer& hwc(graphicPlane(0).displayHardware().getHwComposer());
+    if (hwc.initCheck() == NO_ERROR) 
+    {
+        return hwc.setParameter(cmd,value);
+    }
+
+    return NO_ERROR;
+}
+
+uint32_t SurfaceFlinger::getDisplayParameter(uint32_t cmd)
+{
+    HWComposer& hwc(graphicPlane(0).displayHardware().getHwComposer());
+    if (hwc.initCheck() == NO_ERROR) 
+    {
+        return hwc.getParameter(cmd);
+    }
+
+    return NO_ERROR;
+}
+
 bool SurfaceFlinger::lockPageFlip(const LayerVector& currentLayers)
 {
     bool recomputeVisibleRegions = false;
@@ -971,24 +994,13 @@ void SurfaceFlinger::composeSurfaces(const Region& dirty)
             // remove where there are opaque FB layers. however, on some
             // GPUs doing a "clean slate" glClear might be more efficient.
             // We'll revisit later if needed.
-             const Region region(hw.bounds());
-#ifdef QCOM_HARDWARE
-             if (0 != qdutils::CBUtils::qcomuiClearRegion(region,
-                                              hw.getEGLDisplay()))
-#endif
-             {
-                 glClearColor(0, 0, 0, 0);
-                 glClear(GL_COLOR_BUFFER_BIT);
-             }
+            glClearColor(0, 0, 0, 0);
+            glClear(GL_COLOR_BUFFER_BIT);
         } else {
             // screen is already cleared here
             if (!mWormholeRegion.isEmpty()) {
                 // can happen with SurfaceView
-#ifdef QCOM_HARDWARE
-                if (0 != qdutils::CBUtils::qcomuiClearRegion(mWormholeRegion,
-                                            hw.getEGLDisplay()))
-#endif
-                    drawWormhole();
+                drawWormhole();
             }
         }
 
@@ -1014,33 +1026,22 @@ void SurfaceFlinger::composeSurfaces(const Region& dirty)
                             && layer->isOpaque()) {
                         // never clear the very first layer since we're
                         // guaranteed the FB is already cleared
-#ifdef QCOM_HARDWARE
-                        if (0 != qdutils::CBUtils::qcomuiClearRegion(clip,
-                                                           hw.getEGLDisplay()))
-#endif
                         layer->clearWithOpenGL(clip);
                     }
                     continue;
                 }
-#ifdef QCOM_HARDWARE
-                if (cur && (cur[i].compositionType != HWC_FRAMEBUFFER))
-                    continue;
-#endif
-
                 // render the layer
                 layer->draw(clip);
             }
         }
-
-#ifdef QCOM_HARDWARE
     } else if (cur && !mWormholeRegion.isEmpty()) {
             const Region region(mWormholeRegion.intersect(mDirtyRegion));
             if (!region.isEmpty()) {
-                if (0 != qdutils::CBUtils::qcomuiClearRegion(region,
-                                            hw.getEGLDisplay()))
+#ifdef QCOM_HARDWARE
+               if (0 != qdutils::qcomuiClearRegion(region, hw.getEGLDisplay()))
+#endif
                       drawWormhole();
         }
-#endif
     }
 }
 
@@ -1270,6 +1271,19 @@ void SurfaceFlinger::setTransactionState(const Vector<ComposerState>& state,
             }
         }
     }
+}
+
+int SurfaceFlinger::setDisplayProp(int cmd,int param0,int param1,int param2)
+{
+    const DisplayHardware& hw(graphicPlane(0).displayHardware());
+    return hw.setDispProp(cmd,param0,param1,param2);
+}
+
+int SurfaceFlinger::getDisplayProp(int cmd,int param0,int param1)
+{
+    const DisplayHardware& hw(graphicPlane(0).displayHardware());
+
+    return hw.getDispProp(cmd,param0,param1);
 }
 
 sp<ISurface> SurfaceFlinger::createSurface(

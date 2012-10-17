@@ -176,6 +176,14 @@ wp<IBinder> Layer::getSurfaceTextureBinder() const
     return mSurfaceTexture->getBufferQueue()->asBinder();
 }
 
+void Layer::setTextureInfo(int w,int h,int format)
+{
+    texture_srcw 	= w;
+    texture_srch 	= h;
+    texture_format 	= format;
+    mCurrentCrop    = Rect(w,h);
+}
+
 status_t Layer::setBuffers( uint32_t w, uint32_t h,
                             PixelFormat format, uint32_t flags)
 {
@@ -328,6 +336,8 @@ void Layer::setPerFrameData(hwc_layer_t* hwcl) {
     } else {
         hwcl->handle = buffer->handle;
     }
+    hwcl->format = texture_format;
+    ALOGV("hwcl->format = %d\n",texture_format);
 }
 
 void Layer::onDraw(const Region& clip) const
@@ -787,12 +797,18 @@ uint32_t Layer::getEffectiveUsage(uint32_t usage) const
         // need a hardware-protected path to external video sink
         usage |= GraphicBuffer::USAGE_PROTECTED;
     }
-#ifdef MISSING_GRALLOC_BUFFERS
-    usage |= GraphicBuffer::USAGE_HW_TEXTURE;
-#else
     usage |= GraphicBuffer::USAGE_HW_COMPOSER;
-#endif
     return usage;
+}
+
+int Layer::setDisplayParameter(uint32_t cmd,uint32_t  value)
+{
+    return mFlinger->setDisplayParameter(cmd,value);
+}
+
+uint32_t Layer::getDisplayParameter(uint32_t cmd)
+{
+    return mFlinger->getDisplayParameter(cmd);
 }
 
 uint32_t Layer::getTransformHint() const {

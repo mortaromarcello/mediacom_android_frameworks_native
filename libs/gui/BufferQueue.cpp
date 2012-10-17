@@ -31,9 +31,8 @@
 #include <utils/Log.h>
 #include <gui/SurfaceTexture.h>
 #include <utils/Trace.h>
-#ifdef QCOM_HARDWARE
-#include <gralloc_priv.h>
-#endif // QCOM_HARDWARE
+
+#include <hardware/hwcomposer.h>
 
 // This compile option causes SurfaceTexture to return the buffer that is currently
 // attached to the GL texture from dequeueBuffer when no other buffers are
@@ -84,83 +83,6 @@ static const char* scalingModeName(int scalingMode) {
     }
 }
 
-#ifdef QCOM_HARDWARE
-/*
- * Checks if memory needs to be reallocated for this buffer.
- *
- * @param: Geometry of the current buffer.
- * @param: Required Geometry.
- * @param: Geometry of the updated buffer.
- *
- * @return True if a memory reallocation is required.
- */
-bool needNewBuffer(const qBufGeometry currentGeometry,
-                   const qBufGeometry requiredGeometry,
-                   const qBufGeometry updatedGeometry)
-{
-    // If the current buffer info matches the updated info,
-    // we do not require any memory allocation.
-    if (updatedGeometry.width && updatedGeometry.height &&
-        updatedGeometry.format) {
-        return false;
-    }
-    if (currentGeometry.width != requiredGeometry.width ||
-        currentGeometry.height != requiredGeometry.height ||
-        currentGeometry.format != requiredGeometry.format) {
-        // Current and required geometry do not match. Allocation
-        // required.
-        return true;
-    }
-    return false;
-}
-
-/*
- * Update the geometry of this buffer without reallocation.
- *
- * @param: buffer whose geometry needs to be updated.
- * @param: Updated width
- * @param: Updated height
- * @param: Updated format
- */
-int updateBufferGeometry(sp<GraphicBuffer> buffer, const qBufGeometry updatedGeometry)
-{
-    if (buffer == 0) {
-        ALOGE("updateBufferGeometry: graphic buffer is NULL");
-        return -EINVAL;
-    }
-
-    if (!updatedGeometry.width || !updatedGeometry.height ||
-        !updatedGeometry.format) {
-        // No update required. Return.
-        return 0;
-    }
-    if (buffer->width == updatedGeometry.width &&
-        buffer->height == updatedGeometry.height &&
-        buffer->format == updatedGeometry.format) {
-        // The buffer has already been updated. Return.
-        return 0;
-    }
-    // Validate the handle
-    if (private_handle_t::validate(buffer->handle)) {
-        ALOGE("updateBufferGeometry: handle is invalid");
-        return -EINVAL;
-    }
-    buffer->width  = updatedGeometry.width;
-    buffer->height = updatedGeometry.height;
-    buffer->format = updatedGeometry.format;
-    private_handle_t *hnd = (private_handle_t*)(buffer->handle);
-    if (hnd) {
-        hnd->width  = updatedGeometry.width;
-        hnd->height = updatedGeometry.height;
-        hnd->format = updatedGeometry.format;
-    } else {
-        ALOGE("updateBufferGeometry: hnd is NULL");
-        return -EINVAL;
-    }
-    return 0;
-}
-#endif
-
 BufferQueue::BufferQueue(  bool allowSynchronousMode, int bufferCount ) :
     mDefaultWidth(1),
     mDefaultHeight(1),
@@ -190,9 +112,6 @@ BufferQueue::BufferQueue(  bool allowSynchronousMode, int bufferCount ) :
     if (mGraphicBufferAlloc == 0) {
         ST_LOGE("createGraphicBufferAlloc() failed in BufferQueue()");
     }
-#ifdef QCOM_HARDWARE
-    mNextBufferInfo.set(0, 0, 0);
-#endif
 }
 
 BufferQueue::~BufferQueue() {
@@ -317,6 +236,41 @@ status_t BufferQueue::setBufferCount(int bufferCount) {
     }
 
     return OK;
+}
+
+bool BufferQueue::IsHardwareRenderSupport()
+{
+    if(mPixelFormat >= HWC_FORMAT_MINVALUE && mPixelFormat <= HWC_FORMAT_MAXVALUE)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+int BufferQueue::setParameter(uint32_t cmd,uint32_t value)
+{
+    if(cmd == HWC_LAYER_SETINITPARA)
+	{
+		layerinitpara_t  *layer_info;
+		
+		layer_info = (layerinitpara_t  *)value;
+        mPixelFormat = layer_info->format;
+	}
+
+    if(IsHardwareRenderSupport())
+    {
+        return 100;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+uint32_t BufferQueue::getParameter(uint32_t cmd)
+{
+    return 0;
 }
 
 #ifdef QCOM_HARDWARE
@@ -542,38 +496,16 @@ status_t BufferQueue::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
             // keep the current (or default) format
             format = mPixelFormat;
         }
-#ifdef QCOM_HARDWARE
-        const sp<GraphicBuffer>& buffer(mSlots[buf].mGraphicBuffer);
-#endif
+
         // buffer is now in DEQUEUED (but can also be current at the same time,
         // if we're in synchronous mode)
         mSlots[buf].mBufferState = BufferSlot::DEQUEUED;
-#ifdef QCOM_HARDWARE
-        qBufGeometry currentGeometry;
-        if (buffer != NULL)
-            currentGeometry.set(buffer->width, buffer->height, buffer->format);
-        else
-            currentGeometry.set(0, 0, 0);
 
-        qBufGeometry requiredGeometry;
-        requiredGeometry.set(w, h, format);
-
-        qBufGeometry updatedGeometry;
-        updatedGeometry.set(mNextBufferInfo.width, mNextBufferInfo.height,
-                            mNextBufferInfo.format);
-#endif
-
-#ifndef QCOM_HARDWARE
         const sp<GraphicBuffer>& buffer(mSlots[buf].mGraphicBuffer);
-#endif
         if ((buffer == NULL) ||
-#ifndef QCOM_HARDWARE
             (uint32_t(buffer->width)  != w) ||
             (uint32_t(buffer->height) != h) ||
             (uint32_t(buffer->format) != format) ||
-#else
-             needNewBuffer(currentGeometry, requiredGeometry, updatedGeometry) ||
-#endif
             ((uint32_t(buffer->usage) & usage) != usage))
         {
             status_t error;
@@ -621,15 +553,6 @@ status_t BufferQueue::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
 
     return returnFlags;
 }
-
-#ifdef QCOM_HARDWARE
-status_t BufferQueue::updateBuffersGeometry(int w, int h, int f) {
-    ST_LOGV("updateBuffersGeometry: w=%d h=%d f=%d", w, h, f);
-    Mutex::Autolock lock(mMutex);
-    mNextBufferInfo.set(w, h, f);
-    return NO_ERROR;
-}
-#endif
 
 status_t BufferQueue::setSynchronousMode(bool enabled) {
     ATRACE_CALL();
@@ -701,14 +624,6 @@ status_t BufferQueue::queueBuffer(int buf,
                     "buffer", buf);
             return -EINVAL;
         }
-
-#ifdef QCOM_HARDWARE
-        // Update the buffer Geometry if required
-        qBufGeometry updatedGeometry;
-        updatedGeometry.set(mNextBufferInfo.width,
-                            mNextBufferInfo.height, mNextBufferInfo.format);
-        updateBufferGeometry(mSlots[buf].mGraphicBuffer, updatedGeometry);
-#endif
 
         const sp<GraphicBuffer>& graphicBuffer(mSlots[buf].mGraphicBuffer);
         Rect bufferRect(graphicBuffer->getWidth(), graphicBuffer->getHeight());
@@ -826,6 +741,8 @@ status_t BufferQueue::connect(int api, QueueBufferOutput* output) {
         case NATIVE_WINDOW_API_CPU:
         case NATIVE_WINDOW_API_MEDIA:
         case NATIVE_WINDOW_API_CAMERA:
+	case NATIVE_WINDOW_API_MEDIA_HW:
+	case NATIVE_WINDOW_API_CAMERA_HW:
             if (mConnectedApi != NO_CONNECTED_API) {
                 ST_LOGE("connect: already connected (cur=%d, req=%d)",
                         mConnectedApi, api);
@@ -867,12 +784,11 @@ status_t BufferQueue::disconnect(int api) {
             case NATIVE_WINDOW_API_CPU:
             case NATIVE_WINDOW_API_MEDIA:
             case NATIVE_WINDOW_API_CAMERA:
+	    case NATIVE_WINDOW_API_MEDIA_HW:
+	    case NATIVE_WINDOW_API_CAMERA_HW:
                 if (mConnectedApi == api) {
                     drainQueueAndFreeBuffersLocked();
                     mConnectedApi = NO_CONNECTED_API;
-#ifdef QCOM_HARDWARE
-                    mNextBufferInfo.set(0, 0, 0);
-#endif
                     mDequeueCondition.broadcast();
                     listener = mConsumerListener;
                 } else {

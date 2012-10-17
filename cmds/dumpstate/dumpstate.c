@@ -292,7 +292,7 @@ static void dumpstate() {
 }
 
 static void usage() {
-    fprintf(stderr, "usage: dumpstate [-b soundfile] [-e soundfile] [-o file [-d] [-p] [-z]] [-s] [-q]\n"
+    fprintf(stderr, "usage: dumpstate [-b soundfile] [-e soundfile] [-o file [-d] [-p] [-z]] [-s]\n"
             "  -o: write to file (instead of stdout)\n"
             "  -d: append date to filename (requires -o)\n"
             "  -z: gzip output (requires -o)\n"
@@ -300,14 +300,12 @@ static void usage() {
             "  -s: write output to control socket (for init)\n"
             "  -b: play sound file instead of vibrate, at beginning of job\n"
             "  -e: play sound file instead of vibrate, at end of job\n"
-            "  -q: disable vibrate\n"
 		);
 }
 
 int main(int argc, char *argv[]) {
     int do_add_date = 0;
     int do_compress = 0;
-    int do_vibrate = 1;
     char* use_outfile = 0;
     char* begin_sound = 0;
     char* end_sound = 0;
@@ -330,7 +328,7 @@ int main(int argc, char *argv[]) {
     dump_traces_path = dump_traces();
 
     int c;
-    while ((c = getopt(argc, argv, "b:de:ho:svqzp")) != -1) {
+    while ((c = getopt(argc, argv, "b:de:ho:svzp")) != -1) {
         switch (c) {
             case 'b': begin_sound = optarg;  break;
             case 'd': do_add_date = 1;       break;
@@ -338,7 +336,6 @@ int main(int argc, char *argv[]) {
             case 'o': use_outfile = optarg;  break;
             case 's': use_socket = 1;        break;
             case 'v': break;  // compatibility no-op
-            case 'q': do_vibrate = 0;        break;
             case 'z': do_compress = 6;       break;
             case 'p': do_fb = 1;             break;
             case '?': printf("\n");
@@ -348,12 +345,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    FILE *vibrator = 0;
-    if (do_vibrate) {
-        /* open the vibrator before dropping root */
-        vibrator = fopen("/sys/class/timed_output/vibrator/enable", "w");
-        if (vibrator) fcntl(fileno(vibrator), F_SETFD, FD_CLOEXEC);
-    }
+    /* open the vibrator before dropping root */
+    FILE *vibrator = fopen("/sys/class/timed_output/vibrator/enable", "w");
+    if (vibrator) fcntl(fileno(vibrator), F_SETFD, FD_CLOEXEC);
 
     /* read /proc/cmdline before dropping root */
     FILE *cmdline = fopen("/proc/cmdline", "r");

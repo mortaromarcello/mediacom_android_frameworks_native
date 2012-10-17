@@ -23,6 +23,7 @@
 #include <utils/Log.h>
 #include <utils/Trace.h>
 
+#include <hardware/hwcomposer.h>
 #include <gui/ISurfaceComposer.h>
 #include <gui/SurfaceComposerClient.h>
 #include <gui/SurfaceTexture.h>
@@ -353,9 +354,6 @@ int SurfaceTextureClient::perform(int operation, va_list args)
     case NATIVE_WINDOW_SET_BUFFERS_SIZE:
         res = dispatchSetBuffersSize(args);
         break;
-    case NATIVE_WINDOW_UPDATE_BUFFERS_GEOMETRY:
-        res = dispatchUpdateBuffersGeometry(args);
-        break;
 #endif
     case NATIVE_WINDOW_LOCK:
         res = dispatchLock(args);
@@ -372,6 +370,12 @@ int SurfaceTextureClient::perform(int operation, va_list args)
     case NATIVE_WINDOW_API_DISCONNECT:
         res = dispatchDisconnect(args);
         break;
+    case NATIVE_WINDOW_SETPARAMETER:
+        res = dispatchSetParameter(args);
+        break;
+    case NATIVE_WINDOW_GETPARAMETER:
+        res = dispatchGetParameter(args);
+        break; 
     default:
         res = NAME_NOT_FOUND;
         break;
@@ -394,6 +398,21 @@ int SurfaceTextureClient::dispatchSetUsage(va_list args) {
     return setUsage(usage);
 }
 
+int SurfaceTextureClient::dispatchSetParameter(va_list args)
+{
+    int cmd     = va_arg(args,int);
+    int value   = va_arg(args,int);
+
+    return setParameter((uint32_t)cmd,(uint32_t)value);
+}
+
+int SurfaceTextureClient::dispatchGetParameter(va_list args)
+{
+    int cmd = va_arg(args,int);
+
+    return getParameter((uint32_t)cmd);
+}
+
 int SurfaceTextureClient::dispatchSetCrop(va_list args) {
     android_native_rect_t const* rect = va_arg(args, android_native_rect_t*);
     return setCrop(reinterpret_cast<Rect const*>(rect));
@@ -405,14 +424,29 @@ int SurfaceTextureClient::dispatchSetBufferCount(va_list args) {
 }
 
 int SurfaceTextureClient::dispatchSetBuffersGeometry(va_list args) {
+    layerinitpara_t  layer_info;
     int w = va_arg(args, int);
     int h = va_arg(args, int);
     int f = va_arg(args, int);
+    int screenid = va_arg(args, int);
     int err = setBuffersDimensions(w, h);
     if (err != 0) {
         return err;
     }
-    return setBuffersFormat(f);
+    ALOGD("dispatchSetBuffersGeometry1!\n");
+    err = setBuffersFormat(f);
+    if (err != 0) 
+    {
+        return err;
+    }
+
+    ALOGD("dispatchSetBuffersGeometry2!\n");
+    
+    layer_info.w 			= w;
+    layer_info.h 			= h;
+    layer_info.format 		= f;
+    layer_info.screenid		= screenid;
+    return setParameter(HWC_LAYER_SETINITPARA,(uint32_t)&layer_info);
 }
 
 int SurfaceTextureClient::dispatchSetBuffersDimensions(va_list args) {
@@ -436,13 +470,6 @@ int SurfaceTextureClient::dispatchSetBuffersFormat(va_list args) {
 int SurfaceTextureClient::dispatchSetBuffersSize(va_list args) {
     int size = va_arg(args, int);
     return setBuffersSize(size);
-}
-
-int SurfaceTextureClient::dispatchUpdateBuffersGeometry(va_list args) {
-    int w = va_arg(args, int);
-    int h = va_arg(args, int);
-    int f = va_arg(args, int);
-    return updateBuffersGeometry(w, h, f);
 }
 #endif
 
@@ -509,6 +536,20 @@ int SurfaceTextureClient::disconnect(int api) {
         }
     }
     return err;
+}
+
+int SurfaceTextureClient::setParameter(uint32_t cmd,uint32_t value) 
+{
+    ALOGV("SurfaceTextureClient::setParameter");
+    
+    return mSurfaceTexture->setParameter(cmd,value);
+}
+
+int SurfaceTextureClient::getParameter(uint32_t cmd) 
+{
+    ALOGV("SurfaceTextureClient::setParameter");
+    
+    return mSurfaceTexture->getParameter(cmd);
 }
 
 int SurfaceTextureClient::setUsage(uint32_t reqUsage)
@@ -632,22 +673,6 @@ int SurfaceTextureClient::setBuffersSize(int size)
 
     Mutex::Autolock lock(mMutex);
     status_t err = mSurfaceTexture->setBuffersSize(size);
-    return NO_ERROR;
-}
-
-int SurfaceTextureClient::updateBuffersGeometry(int w, int h, int f)
-{
-    ATRACE_CALL();
-    ALOGV("SurfaceTextureClient::updateBuffersGeometry");
-
-    if (w<0 || h<0 || f<0)
-        return BAD_VALUE;
-
-    if ((w && !h) || (!w && h))
-        return BAD_VALUE;
-
-    Mutex::Autolock lock(mMutex);
-    status_t err = mSurfaceTexture->updateBuffersGeometry(w, h, f);
     return NO_ERROR;
 }
 #endif
@@ -856,16 +881,12 @@ status_t SurfaceTextureClient::lock(
             ALOGW_IF(res, "failed locking buffer (handle = %p)",
                     backBuffer->handle);
 
-            if (res != 0) {
-                err = INVALID_OPERATION;
-            } else {
-                mLockedBuffer = backBuffer;
-                outBuffer->width  = backBuffer->width;
-                outBuffer->height = backBuffer->height;
-                outBuffer->stride = backBuffer->stride;
-                outBuffer->format = backBuffer->format;
-                outBuffer->bits   = vaddr;
-            }
+            mLockedBuffer = backBuffer;
+            outBuffer->width  = backBuffer->width;
+            outBuffer->height = backBuffer->height;
+            outBuffer->stride = backBuffer->stride;
+            outBuffer->format = backBuffer->format;
+            outBuffer->bits   = vaddr;
         }
     }
     return err;

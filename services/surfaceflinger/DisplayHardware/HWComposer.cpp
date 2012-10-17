@@ -39,9 +39,6 @@
 #include "LayerBase.h"
 #include "HWComposer.h"
 #include "SurfaceFlinger.h"
-#ifdef QCOM_HARDWARE
-#include "qcom_ui.h"
-#endif
 
 namespace android {
 // ---------------------------------------------------------------------------
@@ -182,11 +179,6 @@ status_t HWComposer::prepare() const {
                 case HWC_FRAMEBUFFER:
                     numFBLayers++;
                     break;
-#ifdef QCOM_HARDWARE
-                default:
-                    if(qdutils::CBUtils::isUpdatingFB((int)l.compositionType))
-                        numFBLayers++;
-#endif
             }
         }
         mNumOVLayers = numOVLayers;
@@ -240,6 +232,27 @@ size_t HWComposer::getNumLayers() const {
 
 hwc_layer_t* HWComposer::getLayers() const {
     return mList ? mList->hwLayers : 0;
+}
+
+int  HWComposer::setParameter(uint32_t cmd,uint32_t value)
+{
+    if (mHwc) 
+    {
+        int err = mHwc->setparameter(mHwc, cmd,value);
+        
+        return (status_t)err;
+    }
+    return NO_ERROR;
+}
+
+uint32_t HWComposer::getParameter(uint32_t cmd)
+{
+    if (mHwc) 
+    {
+        return mHwc->getparameter(mHwc, cmd);
+    }
+    
+    return NO_ERROR;
 }
 
 void HWComposer::dump(String8& result, char* buffer, size_t SIZE,

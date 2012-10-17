@@ -20,7 +20,7 @@ LOCAL_SRC_FILES:= \
 	GraphicBuffer.cpp \
 	GraphicBufferAllocator.cpp \
 	GraphicBufferMapper.cpp \
-    DisplayDispatcher.cpp \
+	DisplayDispatcher.cpp \
 	DisplaySemaphore.cpp \
 	PixelFormat.cpp \
 	Rect.cpp \
