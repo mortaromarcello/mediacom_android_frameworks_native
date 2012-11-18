@@ -454,7 +454,7 @@ void DisplayHardware::flip(const Region& dirty) const
     }
     
     mPageFlipCount++;
-    
+
     if (mDisplayDispatcher != NULL) 
     {
         mDisplayDispatcher->startSwapBuffer();
@@ -501,7 +501,6 @@ int DisplayHardware::getDispProp(int cmd,int param0,int param1) const
     
     return  0;
 }
-
 void DisplayHardware::dump(String8& res) const
 {
     mNativeWindow->dump(res);

@@ -270,7 +270,6 @@ typedef enum OMX_INDEXTYPE {
 	OMX_IndexParamUseAndroidNativeBuffer2,
 
 	OMX_IndexParamVendorFlushBuffer,
-
     OMX_IndexMax = 0x7FFFFFFF
 
 } OMX_INDEXTYPE;

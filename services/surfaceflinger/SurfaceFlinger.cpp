@@ -71,10 +71,6 @@
 #include "SecTVOutService.h"
 #endif
 
-#ifdef QCOM_HARDWARE
-#include <clear_regions.h>
-#endif
-
 #define EGL_VERSION_HW_ANDROID  0x3143
 
 #define DISPLAY_COUNT       1
@@ -843,7 +839,6 @@ uint32_t SurfaceFlinger::getDisplayParameter(uint32_t cmd)
 
     return NO_ERROR;
 }
-
 bool SurfaceFlinger::lockPageFlip(const LayerVector& currentLayers)
 {
     bool recomputeVisibleRegions = false;
@@ -1310,7 +1305,6 @@ int SurfaceFlinger::getDisplayProp(int cmd,int param0,int param1)
 
     return hw.getDispProp(cmd,param0,param1);
 }
-
 sp<ISurface> SurfaceFlinger::createSurface(
         ISurfaceComposerClient::surface_data_t* params,
         const String8& name,

@@ -62,7 +62,7 @@ public:
             PixelFormat format, uint32_t flags=0);
 
     bool isFixedSize() const;
-    
+
     int 		texture_srcw;
     int 		texture_srch;
     int			oldtexture_srcw;

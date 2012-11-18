@@ -34,6 +34,7 @@
 #ifdef QCOM_HARDWARE
 #include <gralloc_priv.h>
 #endif // QCOM_HARDWARE
+
 #include <hardware/hwcomposer.h>
 
 // This compile option causes SurfaceTexture to return the buffer that is currently
@@ -320,6 +321,16 @@ status_t BufferQueue::setBufferCount(int bufferCount) {
     return OK;
 }
 
+
+#ifdef QCOM_HARDWARE
+status_t BufferQueue::setBuffersSize(int size) {
+    ST_LOGV("setBuffersSize: size=%d", size);
+    Mutex::Autolock lock(mMutex);
+    mGraphicBufferAlloc->setGraphicBufferSize(size);
+    return NO_ERROR;
+}
+#endif
+
 bool BufferQueue::IsHardwareRenderSupport()
 {
     if(mPixelFormat >= HWC_FORMAT_MINVALUE && mPixelFormat <= HWC_FORMAT_MAXVALUE)
@@ -354,15 +365,6 @@ uint32_t BufferQueue::getParameter(uint32_t cmd)
 {
     return 0;
 }
-
-#ifdef QCOM_HARDWARE
-status_t BufferQueue::setBuffersSize(int size) {
-    ST_LOGV("setBuffersSize: size=%d", size);
-    Mutex::Autolock lock(mMutex);
-    mGraphicBufferAlloc->setGraphicBufferSize(size);
-    return NO_ERROR;
-}
-#endif
 
 int BufferQueue::query(int what, int* outValue)
 {

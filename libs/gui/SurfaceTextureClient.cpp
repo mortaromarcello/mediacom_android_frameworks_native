@@ -33,7 +33,7 @@
 #ifdef QCOM_HARDWARE
 #include <gralloc_priv.h>
 #endif
-
+#include <hardware/hwcomposer.h>
 namespace android {
 
 SurfaceTextureClient::SurfaceTextureClient(
@@ -427,14 +427,29 @@ int SurfaceTextureClient::dispatchSetBufferCount(va_list args) {
 }
 
 int SurfaceTextureClient::dispatchSetBuffersGeometry(va_list args) {
+    layerinitpara_t  layer_info;
     int w = va_arg(args, int);
     int h = va_arg(args, int);
     int f = va_arg(args, int);
+    int screenid = va_arg(args, int);
     int err = setBuffersDimensions(w, h);
     if (err != 0) {
         return err;
     }
-    return setBuffersFormat(f);
+    ALOGD("dispatchSetBuffersGeometry1!\n");
+    err = setBuffersFormat(f);
+    if (err != 0) 
+    {
+        return err;
+    }
+
+    ALOGD("dispatchSetBuffersGeometry2!\n");
+    
+    layer_info.w 			= w;
+    layer_info.h 			= h;
+    layer_info.format 		= f;
+    layer_info.screenid		= screenid;
+    return setParameter(HWC_LAYER_SETINITPARA,(uint32_t)&layer_info);
 }
 
 int SurfaceTextureClient::dispatchSetBuffersDimensions(va_list args) {

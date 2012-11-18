@@ -183,7 +183,6 @@ void Layer::setTextureInfo(int w,int h,int format)
     texture_format 	= format;
     mCurrentCrop    = Rect(w,h);
 }
-
 status_t Layer::setBuffers( uint32_t w, uint32_t h,
                             PixelFormat format, uint32_t flags)
 {
@@ -549,7 +548,6 @@ bool Layer::onPreComposition() {
 void Layer::lockPageFlip(bool& recomputeVisibleRegions)
 {
     ATRACE_CALL();
-
     if (mQueuedFrames > 0) {
 
         // if we've already called updateTexImage() without going through
@@ -561,7 +559,6 @@ void Layer::lockPageFlip(bool& recomputeVisibleRegions)
             mPostedDirtyRegion.clear();
             return;
         }
-
         // Capture the old state of the layer for comparisons later
         const bool oldOpacity = isOpaque();
         sp<GraphicBuffer> oldActiveBuffer = mActiveBuffer;
@@ -689,7 +686,6 @@ void Layer::lockPageFlip(bool& recomputeVisibleRegions)
             mCurrentScalingMode = scalingMode;
             mFlinger->invalidateHwcGeometry();
         }
-
         if (oldActiveBuffer != NULL) {
             uint32_t bufWidth  = mActiveBuffer->getWidth();
             uint32_t bufHeight = mActiveBuffer->getHeight();
@@ -810,7 +806,6 @@ uint32_t Layer::getDisplayParameter(uint32_t cmd)
 {
     return mFlinger->getDisplayParameter(cmd);
 }
-
 uint32_t Layer::getTransformHint() const {
     uint32_t orientation = 0;
     if (!mFlinger->mDebugDisableTransformHint) {

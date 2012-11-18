@@ -185,6 +185,7 @@ protected:
     virtual int      setParameter(uint32_t cmd,uint32_t value) = 0;
 
     virtual uint32_t getParameter(uint32_t cmd) = 0;
+
 };
 
 // ----------------------------------------------------------------------------

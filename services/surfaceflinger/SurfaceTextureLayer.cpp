@@ -17,13 +17,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/types.h>
-
+#include <hardware/hwcomposer.h>
 #include <utils/Errors.h>
 
 #include "Layer.h"
 #include "SurfaceTextureLayer.h"
-
-#include <hardware/hwcomposer.h>
 
 namespace android {
 // ---------------------------------------------------------------------------
@@ -40,10 +38,10 @@ status_t SurfaceTextureLayer::connect(int api, QueueBufferOutput* output) {
     status_t err = BufferQueue::connect(api, output);
     if (err == NO_ERROR) {
         switch(api) {
-	    case NATIVE_WINDOW_API_MEDIA_HW:
+            case NATIVE_WINDOW_API_MEDIA_HW:
             case NATIVE_WINDOW_API_CAMERA_HW:
-            	    usehwcomposer = true;
-            	    break;
+                usehwcomposer = true;
+                break;
             case NATIVE_WINDOW_API_MEDIA:
             case NATIVE_WINDOW_API_CAMERA:
                 // Camera preview and videos are rate-limited on the producer
@@ -135,6 +133,5 @@ uint32_t SurfaceTextureLayer::getParameter(uint32_t cmd)
     
     return res;
 }
-
 // ---------------------------------------------------------------------------
 }; // namespace android
